@@ -1,0 +1,55 @@
+﻿@{
+    ViewData["Title"] = "Index";
+    var querydata = ViewBag.data;
+}
+@if (!String.IsNullOrEmpty((String)TempData["error"]))
+{<div class="alert alert-danger text-center" role="alert">@TempData["error"]</div>}
+@if (!String.IsNullOrEmpty((String)TempData["complete"]))
+{<div class="alert alert-success text-center" role="alert">@TempData["complete"]</div>}
+
+<div class="mb-4">
+    <form asp-action="Index" asp-antiforgery="true" method="post" enctype="multipart/form-data">
+        <div class="card border-primary shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-auto mr-auto">
+                        <h3>Import CSV File and Display SQL Code</h3>
+                    </div>
+                </div>
+                <hr />
+                <div id="csvImport">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="form-group">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" name="formFile" id="File">
+                                    <label class="custom-file-label" for="File">Choose file</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <input type="submit" class="btn btn-primary btn-block" id="" value="Import" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <textarea class="form-control" id="displayQueryData" row="4" style="resize:none;height:500px;">@querydata</textarea>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="row">
+                        <div class="col-4">
+                            <input type="button" class="btn btn-primary btn-block" id="Copy" value="Copy" />
+                        </div>
+                        <div class="col-4">
+                            <input type="button" class="btn btn-primary btn-block" id="Clear" value="Clear" />
+                        </div>
+                        <div class="col-4">
+                            <a id="saveToFile" class="btn btn-outline-info btn-block">Save convert data to SQL file</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
