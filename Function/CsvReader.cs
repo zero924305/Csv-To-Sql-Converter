@@ -40,15 +40,19 @@ namespace CsvToSqlConverter.Function
         public static async Task<string> GetSqlHeader(string[] header, string queryname)
         {
             string queryHeader = "";
+            string subHeader;
             queryHeader += "DROP TABLE IF EXISTS " + queryname + "\n";
             queryHeader += "CREATE TABLE " + queryname + "\n";
             queryHeader += "(\n [tempuniqueID] [int] IDENTITY(1,1) NOT NULL,\n";
 
             foreach (string x in header)
             {
-                if (x.Length > 128) x.Substring(0, 128);
+                if (x.Length > 128)
+                    subHeader = x.Substring(0, 127);
+                else
+                    subHeader = x;
 
-                queryHeader += " [" + x + "] Varchar(MAX),\n";
+                queryHeader += " [" + subHeader + "] Varchar(MAX),\n";
             }
             queryHeader = queryHeader.Remove(queryHeader.Length - 2) + "\n)";
 
