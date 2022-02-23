@@ -9,19 +9,19 @@ using System.Threading.Tasks;
 
 namespace CsvToSqlConverter.Function
 {
-    public class CSVReader
+    public static class CsvDataReader
     {
         public static async Task<string> RemoveSpecialCharacters(string str)
         {
             StringBuilder sb = new();
             foreach (char c in str)
             {
-                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_')
+                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
                 {
                     sb.Append(c);
                 }
             }
-            return await Task.FromResult(sb.ToString());
+            return await Task.FromResult("#"+sb.ToString());
         }
 
         public static async Task<string[]> GetHeader(string reader)
@@ -39,22 +39,19 @@ namespace CsvToSqlConverter.Function
 
         public static async Task<string> GetSqlHeader(string[] header, string queryname)
         {
-            string queryHeader = "";
-            string subHeader;
-            queryHeader += "DROP TABLE IF EXISTS " + queryname + "\n";
-            queryHeader += "CREATE TABLE " + queryname + "\n";
-            queryHeader += "(\n [tempuniqueID] [int] IDENTITY(1,1) NOT NULL,\n";
+            StringBuilder queryHeadBuilder = new();
+                queryHeadBuilder.Append("DROP TABLE IF EXISTS " + queryname + "\n");
+                queryHeadBuilder.Append("CREATE TABLE " + queryname + "\n");
+                queryHeadBuilder.Append("(\n [tempuniqueID] [int] IDENTITY(1,1) NOT NULL,\n");
+            int count = 0;
 
             foreach (string x in header)
             {
-                if (x.Length > 128)
-                    subHeader = x.Substring(0, 127);
-                else
-                    subHeader = x;
-
-                queryHeader += " [" + subHeader + "] Varchar(MAX),\n";
+                count++;
+                queryHeadBuilder.Append(" [" + count + "_" + (x.Length > 128 ? x.Substring(0, 100) : x) + "] Varchar(MAX),\n");
             }
-            queryHeader = queryHeader.Remove(queryHeader.Length - 2) + "\n)";
+
+            var queryHeader = queryHeadBuilder.ToString().Remove(queryHeadBuilder.Length - 2) + "\n)";
 
             return await Task.FromResult(queryHeader);
         }
@@ -90,28 +87,30 @@ namespace CsvToSqlConverter.Function
                 queryData.Add("(" + concatenatedValues + ")");
             }
 
-            sqlStatement = await SplitDataRow(queryData, insertIntoTable, sqlStatement, datachunk);
+            sqlStatement = await SplitDataRow(queryData, insertIntoTable, datachunk);
 
             return await Task.FromResult(sqlStatement);
         }
 
-        private static async Task<string> SplitDataRow(List<string> queryData, string insertIntoTable, string sqlStatement, List<string> datachunk)
+        private static async Task<string> SplitDataRow(List<string> queryData, string insertIntoTable, List<string> datachunk)
         {
+            StringBuilder sqlstatementBuilder = new();
+
             for (int i = 0; i < queryData.Count; i++)
             {
                 //split for each 800 rows
                 if (i % 800 == 0 && i > 0)
                 {
-                    sqlStatement += insertIntoTable + string.Join(",\n", datachunk) + "\n\n";
+                    sqlstatementBuilder.Append(insertIntoTable + string.Join(",\n", datachunk) + "\n\n");
                     datachunk.Clear();
                 }
                 datachunk.Add(queryData.ElementAt(i));
             }
 
             if (datachunk.Count > 0)
-                sqlStatement += insertIntoTable + string.Join(",\n", datachunk);
+                sqlstatementBuilder.Append(insertIntoTable + string.Join(",\n", datachunk));
 
-            return await Task.FromResult(sqlStatement);
+            return await Task.FromResult(sqlstatementBuilder.ToString());
         }
     }
 }

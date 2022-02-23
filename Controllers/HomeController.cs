@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using static CsvToSqlConverter.Function.CSVReader;
+using static CsvToSqlConverter.Function.CsvDataReader;
 
 namespace CsvToSqlConverter.Controllers
 {
@@ -37,12 +37,12 @@ namespace CsvToSqlConverter.Controllers
             {
                 //Throw exception if the file are not found
                 if (formFile is null)
-                    throw new NullReferenceException("No CSV file are import");
+                    throw new FileNotFoundException("Import file cannot be found");
 
                 //throw exception if is not CSV format
-                if (!formFile.FileName.Contains(".csv", StringComparison.OrdinalIgnoreCase))
-                    throw new ArgumentException(@"This file '" + formFile.FileName + "' is not CSV format");
-
+                if (!Path.GetExtension(formFile.FileName).Equals(".csv",StringComparison.OrdinalIgnoreCase))
+                    throw new ArgumentException("This file '"+ formFile.FileName +"' is not CSV format");
+                
                 //Create a uploads folder
                 string path = Path.Combine(Environment.ContentRootPath, "Uploads");
                 if (!Directory.Exists(path))
@@ -55,7 +55,7 @@ namespace CsvToSqlConverter.Controllers
                     formFile.CopyTo(stream);
 
                 //Create a temp table name with the CSV file name
-                string tempTableName = "#" + await RemoveSpecialCharacters(fileName.Trim().Replace(".", "").Replace(" ", string.Empty));
+                var tempTableName = await RemoveSpecialCharacters(fileName.Trim());
 
                 //Read CSV path and get the Csv header row
                 string[] csvHeader = await GetHeader(filePath);
@@ -66,9 +66,8 @@ namespace CsvToSqlConverter.Controllers
                 string insertIntoTable = await GetDataRecord(sqlRow, tempTableName);
 
                 //Full SQL query
-                string fullQuery = queryHeader + "\n" + insertIntoTable + "\n"; //+ queryname.Query;
+                string fullQuery = queryHeader + "\n" + insertIntoTable + "\n";
 
-                //ViewBag.queryList = queryList;
                 ViewBag.data = fullQuery;
                 TempData["complete"] = "Import successful";
             }
